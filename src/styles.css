@@ -1,0 +1,266 @@
+:root {
+    color-scheme: light dark;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+* {
+    box-sizing: border-box;
+}
+html,
+body,
+#root {
+    height: 100%;
+}
+body {
+    margin: 0;
+    font-family: system-ui, Segoe UI, Roboto, Apple SD Gothic Neo, Noto Sans KR, sans-serif;
+}
+.home-screen {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100%;
+}
+.home-container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.home-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.home-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.greeting {
+    font-size: 14px;
+    color: #f1f1f1;
+    margin-top: 6px;
+}
+.app {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: #fafafa;
+}
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    color: #111;
+}
+.brand {
+    font-weight: 700;
+    text-decoration: none;
+    color: inherit;
+}
+.nav {
+    display: none;
+}
+.nav a {
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #111;
+}
+.nav a.active {
+    background: #111;
+    color: #fff;
+}
+.app-main {
+    padding: 12px 12px 72px;
+}
+.card,
+.nutrition-section,
+.profile-section,
+.meal-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fff;
+    margin-bottom: 12px;
+}
+.calorie-main {
+    border: 0;
+    border-radius: 25px;
+    padding: 35px;
+    margin: 0 8px 16px;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    text-align: center;
+}
+.calorie-label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.ai-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.calorie-value {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    margin: 12px 0;
+}
+.calorie-unit {
+    font-size: 18px;
+    opacity: 0.9;
+    margin-left: 6px;
+}
+.calorie-subtext {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 8px;
+}
+.meal-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 0 8px 16px;
+}
+.meal-card {
+    text-align: center;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+.meal-card.active {
+    outline: 2px solid #667eea;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+}
+.meal-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+.meal-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+.meal-kcal {
+    font-size: 16px;
+    font-weight: 700;
+    color: #667eea;
+}
+.meal-kcal-unit {
+    font-size: 11px;
+    color: #999;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+.row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+}
+.input[type="textarea"],
+textarea.input {
+    resize: vertical;
+}
+.btn {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #111;
+    background: #111;
+    color: #fff;
+    cursor: pointer;
+}
+.muted {
+    color: #6b7280;
+    font-size: 12px;
+}
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.kbadge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    font-size: 12px;
+}
+.app-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+    color: #111;
+    padding: env(safe-area-inset-bottom) 0 0 0;
+}
+
+/* bottom tabbar for mobile */
+.tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(56px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+}
+.tabbar a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-bottom: env(safe-area-inset-bottom);
+    color: #111;
+    text-decoration: none;
+}
+.tabbar a.active {
+    color: #111;
+    font-weight: 700;
+}
+
+/* small screens default, show top nav on >=768px */
+@media (min-width: 768px) {
+    .nav {
+        display: flex;
+        gap: 12px;
+    }
+    .app-main {
+        padding: 16px;
+    }
+    .tabbar {
+        display: none;
+    }
+}
