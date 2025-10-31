@@ -1,8 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { ProfileData, loadProfile, saveProfile } from "../lib/diet";
+import { useNavigate } from "react-router-dom";
+
+type DbUser = {
+    id: number;
+    name: string;
+    gender?: string | null;
+    age?: number | null;
+    goal?: string | null;
+    calorie_target?: number | null;
+    allergies?: string[] | null;
+    dislike_ingredients?: string[] | null;
+    heightCm?: number | null; // 확장 여지, 현재 스키마엔 없음
+    weightKg?: number | null; // 확장 여지, 현재 스키마엔 없음
+    bmi?: number | null; // 확장 여지
+    disease?: string | null; // 확장 여지
+};
 
 export function MyPage() {
-    const [form, setForm] = useState<ProfileData>(() => loadProfile());
+    const navigate = useNavigate();
+    const [userId, setUserId] = useState<number | null>(null);
+    const [form, setForm] = useState<Partial<DbUser>>({});
 
     const bmiCalc = useMemo(() => {
         if (!form.heightCm || !form.weightKg) return null;
@@ -11,8 +28,32 @@ export function MyPage() {
     }, [form.heightCm, form.weightKg]);
 
     useEffect(() => {
-        setForm((prev) => ({ ...prev, bmi: bmiCalc }));
+        setForm((prev) => ({ ...prev, bmi: bmiCalc ?? undefined }));
     }, [bmiCalc]);
+
+    useEffect(() => {
+        const token = typeof localStorage !== "undefined" ? localStorage.getItem("aidiet.token") : null;
+        if (!token) {
+            navigate("/login", { replace: true });
+            return;
+        }
+        const sp = new URLSearchParams(window.location.search);
+        const idParam = sp.get("userId");
+        let id = idParam ? Number(idParam) : null;
+        if (!id) {
+            try {
+                const u = typeof localStorage !== "undefined" ? localStorage.getItem("aidiet.user") : null;
+                const parsed = u ? JSON.parse(u) : null;
+                if (parsed?.id) {
+                    id = Number(parsed.id);
+                    navigate(`/mypage?userId=${id}`, { replace: true });
+                }
+            } catch {}
+        }
+        setUserId(id);
+        if (!id) return;
+        fetch(`/api/user/${id}`).then((r) => r.json()).then(setForm).catch(() => setForm({}));
+    }, []);
 
     const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -22,8 +63,13 @@ export function MyPage() {
         }));
     };
 
-    const onSave = () => {
-        saveProfile(form);
+    const onSave = async () => {
+        if (!userId) return alert("userId가 필요합니다 (?userId=)");
+        await fetch(`/api/user/${userId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(form),
+        });
         alert("저장되었습니다.");
     };
 
@@ -83,7 +129,7 @@ export function MyPage() {
                         </button>
                     </div>
                     <p className="muted" style={{ marginTop: 8 }}>
-                        정보는 로컬 저장소에 보관됩니다.
+                        로그인 사용자 정보는 서버 DB를 통해 관리됩니다.
                     </p>
                 </div>
 

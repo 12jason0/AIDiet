@@ -1,13 +1,23 @@
-import { useMemo } from "react";
-import { generateWeekPlan, loadProfile } from "../lib/diet";
+import { useEffect, useState } from "react";
+import { DayMeals, fetchWeekPlanFromDB } from "../lib/diet";
 
 export function DietPage() {
-    const profile = loadProfile();
-    const week = useMemo(() => generateWeekPlan(undefined, profile.goal), [profile.goal]);
+    const [week, setWeek] = useState<DayMeals[]>([]);
+    const [userId, setUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        const sp = new URLSearchParams(window.location.search);
+        const idParam = sp.get("userId");
+        const id = idParam ? Number(idParam) : null;
+        setUserId(id);
+        if (!id) return;
+        fetchWeekPlanFromDB(id).then(setWeek).catch(() => setWeek([]));
+    }, []);
 
     return (
         <div>
             <h2>1주일 식단</h2>
+            {!userId && <p className="muted">URL에 ?userId=숫자를 포함해 주세요.</p>}
             <div className="grid">
                 {week.map((day) => (
                     <div className="card" key={day.date}>

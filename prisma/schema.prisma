@@ -1,188 +1,135 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
+// schema.prisma
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-/* ------------------------------
-   🧍 USER & PROFILE
---------------------------------*/
-model USER {
-  user_id        Int                 @id @default(autoincrement())
-  email          String              @unique
-  password       String
-  name           String
-  created_at     DateTime            @default(now())
-  profile        USER_PROFILE?
-  mealCerts      MEAL_CERTIFICATION[]
-  carts          CART[]
-  posts          POST[]
-  comments       COMMENT[]
-  coupons        COUPON[]
-  weeklyPlans    WEEKLY_MEAL_PLAN[]
+generator client {
+  provider = "prisma-client-js"
 }
 
-/* ------------------------------
-   📊 USER_PROFILE
---------------------------------*/
-model USER_PROFILE {
-  profile_id  Int      @id @default(autoincrement())
-  user_id     Int      @unique
-  height      Float?
-  weight      Float?
-  bmi         Float?
-  disease     String?
-  goal        String?
-  updated_at  DateTime @updatedAt
+model User {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  email               String   @unique
+  passwordHash        String
+  gender              String?
+  age                 Int?
+  goal                String? // diet, muscle_gain, low_sugar 등
+  calorie_target      Float?
+  allergies           Json? // ✅ String[] 대신 Json 사용
+  dislike_ingredients Json? // ✅ String[] 대신 Json 사용
+  createdAt           DateTime @default(now())
 
-  user        USER     @relation(fields: [user_id], references: [user_id])
+  // 관계
+  mealPlans          MealPlan[]
+  recommendationLogs RecommendationLog[]
+  cart               Cart?
 }
 
-/* ------------------------------
-   🗓 WEEKLY & DAILY MEAL PLAN
---------------------------------*/
-model WEEKLY_MEAL_PLAN {
-  plan_id     Int          @id @default(autoincrement())
-  user_id     Int
-  start_date  DateTime?
-  end_date    DateTime?
-  status      String?
-  created_at  DateTime      @default(now())
-
-  user        USER          @relation(fields: [user_id], references: [user_id])
-  dailyMeals  DAILY_MEAL[]
-  carts       CART[]
+model Nutrition {
+  id         Int         @id @default(autoincrement())
+  kcal       Float?
+  protein    Float?
+  fat        Float?
+  carbs      Float?
+  sugar      Float?
+  fiber      Float?
+  sodium     Float?
+  ingredient Ingredient?
 }
 
-model DAILY_MEAL {
-  daily_meal_id Int                @id @default(autoincrement())
-  plan_id       Int
-  meal_date     DateTime?
-  day_number    Int?
-
-  plan          WEEKLY_MEAL_PLAN   @relation(fields: [plan_id], references: [plan_id])
-  meals         MEAL[]
-  mealCerts     MEAL_CERTIFICATION[]
-}
-
-/* ------------------------------
-   🍽 MEAL & INGREDIENTS
---------------------------------*/
-model MEAL {
-  meal_id        Int           @id @default(autoincrement())
-  daily_meal_id  Int
-  meal_type      String?
-  meal_name      String?
-  ingredientsId  Int?
-  calories       Int?
-  protein        Float?
-  carbs          Float?
-  fat            Float?
-  recipe         String?
-  image_url      String?
-
-  dailyMeal      DAILY_MEAL    @relation(fields: [daily_meal_id], references: [daily_meal_id])
-  ingredients    ingredients?  @relation(fields: [ingredientsId], references: [ingredientId])
-  cartItems      CART_ITEM[]
-}
-
-model ingredients {
-  ingredientId   Int       @id @default(autoincrement())
-  ingredient_name String
-  image_url       String?
-  category_main   String?
-  category_sub    String?
-  division        String?
-  meals           MEAL[]
-  kcal            String?
-  protein         String?
-  fat             String?
-  carbs           string?      
-}
-
-/* ------------------------------
-   ✅ MEAL_CERTIFICATION
---------------------------------*/
-model MEAL_CERTIFICATION {
-  certification_id  Int       @id @default(autoincrement())
-  user_id           Int
-  daily_meal_id     Int
-  certification_date DateTime?
+model Ingredient {
+  id                Int                @id @default(autoincrement())
+  name              String
+  category          String // protein, vegetable, grain, etc
   image_url         String?
-  created_at        DateTime  @default(now())
-
-  user              USER      @relation(fields: [user_id], references: [user_id])
-  dailyMeal         DAILY_MEAL @relation(fields: [daily_meal_id], references: [daily_meal_id])
+  nutrition_id      Int?               @unique
+  nutrition         Nutrition?         @relation(fields: [nutrition_id], references: [id])
+  recipeIngredients RecipeIngredient[]
+  cartItems         CartItem[]
 }
 
-/* ------------------------------
-   🛒 CART & ITEM
---------------------------------*/
-model CART {
-  cart_id      Int       @id @default(autoincrement())
-  user_id      Int
-  plan_id      Int?
-  alarm_sent   Boolean   @default(false)
-  created_at   DateTime  @default(now())
-
-  user         USER      @relation(fields: [user_id], references: [user_id])
-  plan         WEEKLY_MEAL_PLAN? @relation(fields: [plan_id], references: [plan_id])
-  items        CART_ITEM[]
+model Recipe {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  description        String?             @db.Text
+  cooking_time       Int? // minutes
+  difficulty         String?
+  image_url          String?
+  instructions       Json? // ✅ String[] 대신 Json 사용
+  recipeIngredients  RecipeIngredient[]
+  mealPlanRecipes    MealPlanRecipe[]
+  recommendationLogs RecommendationLog[]
 }
 
-model CART_ITEM {
-  cart_item_id    Int        @id @default(autoincrement())
-  cart_id         Int
-  meal_id         Int?
-  ingredient_name String?
-  quantity        String?
+model RecipeIngredient {
+  id            Int        @id @default(autoincrement())
+  recipe_id     Int
+  ingredient_id Int
+  amount        Float?
+  unit          String?
+  recipe        Recipe     @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
 
-  cart            CART       @relation(fields: [cart_id], references: [cart_id])
-  meal            MEAL?      @relation(fields: [meal_id], references: [meal_id])
+  @@index([recipe_id])
+  @@index([ingredient_id])
 }
 
-/* ------------------------------
-   🎟 COUPON
---------------------------------*/
-model COUPON {
-  coupon_id      Int       @id @default(autoincrement())
-  user_id        Int
-  coupon_code    String
-  coupon_name    String
-  discount_amount Int?
-  issue_date     DateTime?
-  expiry_date    DateTime?
-  is_used        Boolean   @default(false)
+model MealPlan {
+  id      Int              @id @default(autoincrement())
+  user_id Int
+  date    DateTime
+  type    String // breakfast, lunch, dinner, snack
+  user    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  recipes MealPlanRecipe[]
 
-  user           USER      @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
+  @@index([date])
 }
 
-/* ------------------------------
-   💬 POST & COMMENT
---------------------------------*/
-model POST {
-  post_id     Int        @id @default(autoincrement())
-  user_id     Int
-  title       String
-  content     String
-  view_count  Int        @default(0)
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
+model MealPlanRecipe {
+  id          Int      @id @default(autoincrement())
+  mealplan_id Int
+  recipe_id   Int
+  mealPlan    MealPlan @relation(fields: [mealplan_id], references: [id], onDelete: Cascade)
+  recipe      Recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
-  user        USER       @relation(fields: [user_id], references: [user_id])
-  comments    COMMENT[]
+  @@index([mealplan_id])
+  @@index([recipe_id])
 }
 
-model COMMENT {
-  comment_id  Int       @id @default(autoincrement())
-  post_id     Int
-  user_id     Int
-  content     String
-  created_at  DateTime  @default(now())
+model RecommendationLog {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  recipe_id     Int
+  recommendedAt DateTime @default(now())
+  liked         Boolean? @default(false)
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  recipe        Recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
-  post        POST      @relation(fields: [post_id], references: [post_id])
-  user        USER      @relation(fields: [user_id], references: [user_id])
+  @@index([user_id])
+  @@index([recipe_id])
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  user_id   Int        @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id            Int        @id @default(autoincrement())
+  cart_id       Int
+  ingredient_id Int
+  quantity      Float?
+  unit          String?
+  cart          Cart       @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+
+  @@index([cart_id])
+  @@index([ingredient_id])
 }

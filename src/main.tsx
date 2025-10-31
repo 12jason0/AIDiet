@@ -8,6 +8,8 @@ const Home = React.lazy(() => import("./app/page"));
 const Diet = React.lazy(() => import("./app/diet/page"));
 const My = React.lazy(() => import("./app/mypage/page"));
 const Board = React.lazy(() => import("./app/board/page"));
+const Login = React.lazy(() => import("./app/login/page"));
+const Register = React.lazy(() => import("./app/register/page"));
 
 const router = createBrowserRouter([
     {
@@ -18,6 +20,8 @@ const router = createBrowserRouter([
             { path: "diet", element: <Diet /> },
             { path: "mypage", element: <My /> },
             { path: "board", element: <Board /> },
+            { path: "login", element: <Login /> },
+            { path: "signup", element: <Register /> },
         ],
     },
 ]);
