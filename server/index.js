@@ -67,7 +67,11 @@ app.post("/api/meal/generate", async (req, res) => {
         const availableIngredients = filterIngredients(ingredients, profile);
 
         // 2) AI 프롬프트 구성
-        const prompt = `사용자 정보\n- 목표: ${profile.goal}\n- 목표 칼로리: ${profile.calorie_target}\n- 알레르기: ${(profile.allergies || []).join(", ")}\n- 식사 시간: ${mealType}\n\n사용 가능한 재료: ${JSON.stringify(availableIngredients)}\n\n위 재료들을 조합해서 영양 균형이 맞는 식단을 JSON 형식으로 추천해주세요.`;
+        const prompt = `사용자 정보\n- 목표: ${profile.goal}\n- 목표 칼로리: ${profile.calorie_target}\n- 알레르기: ${(
+            profile.allergies || []
+        ).join(", ")}\n- 식사 시간: ${mealType}\n\n사용 가능한 재료: ${JSON.stringify(
+            availableIngredients
+        )}\n\n위 재료들을 조합해서 영양 균형이 맞는 식단을 JSON 형식으로 추천해주세요.`;
 
         let aiResponse = await callAI(prompt);
         if (aiResponse?.__fallback) {
@@ -101,9 +105,21 @@ app.post("/api/meal/generate-week", async (req, res) => {
         for (let day = 0; day < days; day++) {
             const date = new Date(Date.now() + day * 86400000);
             const [breakfast, lunch, dinner] = await Promise.all([
-                fetch("http://localhost:4000/api/meal/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile, mealType: "breakfast" }) }).then((r) => r.json()),
-                fetch("http://localhost:4000/api/meal/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile, mealType: "lunch" }) }).then((r) => r.json()),
-                fetch("http://localhost:4000/api/meal/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile, mealType: "dinner" }) }).then((r) => r.json()),
+                fetch("http://localhost:4000/api/meal/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ profile, mealType: "breakfast" }),
+                }).then((r) => r.json()),
+                fetch("http://localhost:4000/api/meal/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ profile, mealType: "lunch" }),
+                }).then((r) => r.json()),
+                fetch("http://localhost:4000/api/meal/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ profile, mealType: "dinner" }),
+                }).then((r) => r.json()),
             ]);
             plan.push({ date, meals: { breakfast, lunch, dinner } });
         }
@@ -111,6 +127,49 @@ app.post("/api/meal/generate-week", async (req, res) => {
     } catch (e) {
         console.error(e);
         return res.status(500).json({ error: "주간 생성 실패" });
+    }
+});
+
+// Recipe preview from DB
+app.get("/api/recipes/preview", async (req, res) => {
+    try {
+        const limit = Math.min(Number(req.query.limit || 6), 24);
+        const recipes = await prisma.recipe.findMany({
+            take: limit,
+            orderBy: { id: "desc" },
+            include: {
+                recipeIngredients: {
+                    include: { ingredient: { include: { nutrition: true } } },
+                },
+            },
+        });
+        const simplify = (r) => {
+            const totals = r.recipeIngredients.reduce(
+                (acc, ri) => {
+                    const n = ri.ingredient?.nutrition || {};
+                    acc.kcal += n.kcal || 0;
+                    acc.protein += n.protein || 0;
+                    acc.carbs += n.carbs || 0;
+                    acc.fat += n.fat || 0;
+                    return acc;
+                },
+                { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+            );
+            return {
+                id: r.id,
+                name: r.name,
+                image_url: r.image_url,
+                cooking_time: r.cooking_time,
+                kcal: Math.round(totals.kcal),
+                protein: Math.round(totals.protein),
+                carbs: Math.round(totals.carbs),
+                fat: Math.round(totals.fat),
+            };
+        };
+        return res.json(recipes.map(simplify));
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error: "미리보기 조회 실패" });
     }
 });
 
@@ -154,5 +213,3 @@ const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
     console.log(`[aidiet-api] listening on http://localhost:${port}`);
 });
-
-

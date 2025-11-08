@@ -49,6 +49,6 @@ export function Footer() {
             </nav>
         </footer>
     );
-}
+}   
 
 export default Footer;
