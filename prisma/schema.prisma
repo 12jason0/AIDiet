@@ -1,185 +1,141 @@
-// =============================
-// Prisma Schema for ai_diet
-// =============================
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// =============================
-// USER
-// =============================
-model User {
-  id                  Int       @id @default(autoincrement())
-  name                String
-  email               String    @unique
-  passwordHash        String
-  gender              String?
-  age                 Int?
-  goal                String?   // 사용자가 설정한 개인 목표 (diet, muscle_gain 등)
-  calorie_target      Float?
-  allergies           Json?     // ✅ 문자열 배열 대신 Json 사용
-  dislike_ingredients Json?
-  createdAt           DateTime  @default(now())
-
-  // 관계
-  mealPlans           MealPlan[]
-  recommendationLogs  RecommendationLog[]
-  cart                Cart?
+datasource db {
+  provider = "mysql"
+  url      = "mysql://aidiet:%40o5334044112@127.0.0.1:3306/ai_diet"
 }
 
-// =============================
-// GOAL
-// =============================
-model Goal {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique // 예: 'diet', 'muscle_gain', 'balanced', 'vegetarian'
-  description String?
-  recipes     Recipe[]
-}
-
-// =============================
-// NUTRITION
-// =============================
-model Nutrition {
-  id         Int          @id @default(autoincrement())
-  kcal       Float?
-  protein    Float?
-  fat        Float?
-  carbs      Float?
-  sugar      Float?
-  fiber      Float?
-  sodium     Float?
-  ingredient Ingredient?
-}
-
-// =============================
-// INGREDIENT
-// =============================
-model Ingredient {
-  id                Int                @id @default(autoincrement())
-  name              String
-  category          String             // protein, vegetable, grain, etc
-  image_url         String?            @db.VarChar(512)
-  nutrition_id      Int?               @unique
-  nutrition         Nutrition?         @relation(fields: [nutrition_id], references: [id])
-  recipeIngredients RecipeIngredient[]
-  cartItems         CartItem[]
-}
-
-// =============================
-// RECIPE
-// =============================
-model Recipe {
-  id                 Int                 @id @default(autoincrement())
-  name               String
-  description        String?             @db.Text
-  cooking_time       Int?
-  difficulty         String?
-  image_url          String?             @db.VarChar(512)
-  instructions       Json?
-  goal_id            Int?                // 외래키: Goal
-  goal               Goal?               @relation(fields: [goal_id], references: [id], onDelete: SetNull)
-  recipeIngredients  RecipeIngredient[]
-  mealPlanRecipes    MealPlanRecipe[]
-  recommendationLogs RecommendationLog[]
-}
-
-// =============================
-// RECIPE INGREDIENT
-// =============================
-model RecipeIngredient {
-  id            Int        @id @default(autoincrement())
-  recipe_id     Int
-  ingredient_id Int
-  amount        Float?
-  unit          String?
-
-  recipe        Recipe     @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
-  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
-
-  @@index([recipe_id])
-  @@index([ingredient_id])
-}
-
-// =============================
-// MEAL PLAN
-// =============================
-model MealPlan {
-  id      Int              @id @default(autoincrement())
-  user_id Int
-  date    DateTime
-  type    String // breakfast, lunch, dinner, snack
-
-  user    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  recipes MealPlanRecipe[]
-
-  @@index([user_id])
-  @@index([date])
-}
-
-// =============================
-// MEAL PLAN RECIPE
-// =============================
-model MealPlanRecipe {
-  id          Int      @id @default(autoincrement())
-  mealplan_id Int
-  recipe_id   Int
-
-  mealPlan    MealPlan @relation(fields: [mealplan_id], references: [id], onDelete: Cascade)
-  recipe      Recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
-
-  @@index([mealplan_id])
-  @@index([recipe_id])
-}
-
-// =============================
-// RECOMMENDATION LOG
-// =============================
-model RecommendationLog {
-  id            Int      @id @default(autoincrement())
-  user_id       Int
-  recipe_id     Int
-  recommendedAt DateTime @default(now())
-  liked         Boolean? @default(false)
-
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  recipe        Recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@index([recipe_id])
-}
-
-// =============================
-// CART
-// =============================
-model Cart {
+model cart {
   id        Int        @id @default(autoincrement())
-  user_id   Int        @unique
+  user_id   Int        @unique(map: "Cart_user_id_key")
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  items     CartItem[]
+  updatedAt DateTime
+  user      user       @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "Cart_user_id_fkey")
+  cartitem  cartitem[]
 }
 
-// =============================
-// CART ITEM
-// =============================
-model CartItem {
+model cartitem {
   id            Int        @id @default(autoincrement())
   cart_id       Int
   ingredient_id Int
   quantity      Float?
   unit          String?
+  cart          cart       @relation(fields: [cart_id], references: [id], onDelete: Cascade, map: "CartItem_cart_id_fkey")
+  ingredient    ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade, map: "CartItem_ingredient_id_fkey")
 
-  cart          Cart       @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+  @@index([cart_id], map: "CartItem_cart_id_idx")
+  @@index([ingredient_id], map: "CartItem_ingredient_id_idx")
+}
 
-  @@index([cart_id])
-  @@index([ingredient_id])
+model goal {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  recipe      recipe[]
+}
+
+model ingredient {
+  id               Int                @id @default(autoincrement())
+  name             String
+  category         String
+  image_url        String?            @db.Text
+  nutrition_id     Int?               @unique(map: "Ingredient_nutrition_id_key")
+  cartitem         cartitem[]
+  recipeingredient recipeingredient[]
+}
+
+model mealplan {
+  id             Int              @id @default(autoincrement())
+  user_id        Int
+  date           DateTime
+  type           String
+  user           user             @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "MealPlan_user_id_fkey")
+  mealplanrecipe mealplanrecipe[]
+
+  @@index([date], map: "MealPlan_date_idx")
+  @@index([user_id], map: "MealPlan_user_id_idx")
+}
+
+model mealplanrecipe {
+  id          Int      @id @default(autoincrement())
+  mealplan_id Int
+  recipe_id   Int
+  mealplan    mealplan @relation(fields: [mealplan_id], references: [id], onDelete: Cascade, map: "MealPlanRecipe_mealplan_id_fkey")
+  recipe      recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade, map: "MealPlanRecipe_recipe_id_fkey")
+
+  @@index([mealplan_id], map: "MealPlanRecipe_mealplan_id_idx")
+  @@index([recipe_id], map: "MealPlanRecipe_recipe_id_idx")
+}
+
+model nutrition {
+  id      Int    @id @default(autoincrement())
+  kcal    Float?
+  protein Float?
+  fat     Float?
+  carbs   Float?
+  sugar   Float?
+  fiber   Float?
+  sodium  Float?
+}
+
+model recipe {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  description       String?             @db.Text
+  cooking_time      Int?
+  difficulty        String?
+  image_url         String?
+  instructions      Json?
+  goal_id           Int?
+  mealplanrecipe    mealplanrecipe[]
+  goal              goal?               @relation(fields: [goal_id], references: [id], onUpdate: NoAction, map: "fk_recipe_goal")
+  recipeingredient  recipeingredient[]
+  recommendationlog recommendationlog[]
+
+  @@index([goal_id], map: "fk_recipe_goal")
+}
+
+model recipeingredient {
+  id            Int        @id @default(autoincrement())
+  recipe_id     Int
+  ingredient_id Int
+  amount        Float?
+  unit          String?
+  ingredient    ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade, map: "RecipeIngredient_ingredient_id_fkey")
+  recipe        recipe     @relation(fields: [recipe_id], references: [id], onDelete: Cascade, map: "RecipeIngredient_recipe_id_fkey")
+
+  @@index([ingredient_id], map: "RecipeIngredient_ingredient_id_idx")
+  @@index([recipe_id], map: "RecipeIngredient_recipe_id_idx")
+}
+
+model recommendationlog {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  recipe_id     Int
+  recommendedAt DateTime @default(now())
+  liked         Boolean? @default(false)
+  recipe        recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade, map: "RecommendationLog_recipe_id_fkey")
+  user          user     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "RecommendationLog_user_id_fkey")
+
+  @@index([recipe_id], map: "RecommendationLog_recipe_id_idx")
+  @@index([user_id], map: "RecommendationLog_user_id_idx")
+}
+
+model user {
+  id                  Int                 @id @default(autoincrement())
+  name                String
+  gender              String?
+  email               String
+  passwordHash        String
+  age                 Int?
+  goal                String?
+  calorie_target      Float?
+  allergies           Json?
+  dislike_ingredients Json?
+  createdAt           DateTime            @default(now())
+  cart                cart?
+  mealplan            mealplan[]
+  recommendationlog   recommendationlog[]
 }

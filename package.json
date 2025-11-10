@@ -4,7 +4,9 @@
     "version": "0.1.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
+        "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+        "dev:server": "cd server && node index.js",
+        "dev:client": "vite",
         "dev:api": "node server/index.js",
         "build": "tsc -b && vite build",
         "preview": "vite preview --port 5173",
@@ -13,9 +15,9 @@
     "dependencies": {
         "@prisma/client": "^6.18.0",
         "bcryptjs": "^2.4.3",
-        "jsonwebtoken": "^9.0.2",
         "cors": "^2.8.5",
         "express": "^4.21.1",
+        "jsonwebtoken": "^9.0.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.26.2"
@@ -23,10 +25,9 @@
     "devDependencies": {
         "@types/react": "^18.3.7",
         "@types/react-dom": "^18.3.2",
+        "concurrently": "^9.2.1",
         "prisma": "^6.18.0",
         "typescript": "^5.6.3",
         "vite": "^5.4.8"
     }
 }
-
-

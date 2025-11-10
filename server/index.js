@@ -134,36 +134,24 @@ app.post("/api/meal/generate-week", async (req, res) => {
 app.get("/api/recipes/preview", async (req, res) => {
     try {
         const limit = Math.min(Number(req.query.limit || 6), 24);
+        // 현재 DB에는 외래키가 없어 Prisma 관계가 일부 생성되지 않아 join이 불가하므로
+        // 우선 미리보기는 레시피 기본 정보만 반환하고, 영양 합계는 추후 FK 추가 후 보강한다.
         const recipes = await prisma.recipe.findMany({
             take: limit,
             orderBy: { id: "desc" },
-            include: {
-                recipeIngredients: {
-                    include: { ingredient: { include: { nutrition: true } } },
-                },
-            },
+            select: { id: true, name: true, image_url: true, cooking_time: true },
         });
         const simplify = (r) => {
-            const totals = r.recipeIngredients.reduce(
-                (acc, ri) => {
-                    const n = ri.ingredient?.nutrition || {};
-                    acc.kcal += n.kcal || 0;
-                    acc.protein += n.protein || 0;
-                    acc.carbs += n.carbs || 0;
-                    acc.fat += n.fat || 0;
-                    return acc;
-                },
-                { kcal: 0, protein: 0, carbs: 0, fat: 0 }
-            );
             return {
                 id: r.id,
                 name: r.name,
                 image_url: r.image_url,
                 cooking_time: r.cooking_time,
-                kcal: Math.round(totals.kcal),
-                protein: Math.round(totals.protein),
-                carbs: Math.round(totals.carbs),
-                fat: Math.round(totals.fat),
+                // FK 정비 전까지 영양 합계는 생략
+                kcal: null,
+                protein: null,
+                carbs: null,
+                fat: null,
             };
         };
         return res.json(recipes.map(simplify));

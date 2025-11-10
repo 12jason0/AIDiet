@@ -7,7 +7,9 @@ export function HomePage() {
     const [userId, setUserId] = useState<number | null>(null);
     const [user, setUser] = useState<any>(null);
     const [week, setWeek] = useState<DayMeals[]>([]);
-    const [previews, setPreviews] = useState<Array<{ id: number; name: string; image_url?: string | null; kcal?: number }>>([]);
+    const [previews, setPreviews] = useState<
+        Array<{ id: number; name: string; image_url?: string | null; kcal?: number }>
+    >([]);
 
     useEffect(() => {
         const sp = new URLSearchParams(window.location.search);
@@ -28,11 +30,21 @@ export function HomePage() {
 
     // DB 레시피 미리보기는 로그인 여부와 관계없이 노출
     useEffect(() => {
-        fetch(`/api/recipes/preview?limit=6`)
+        // 프록시 문제 시를 대비해 개발 포트(5174)에서는 API 서버 절대 경로를 사용
+        const API_BASE =
+            typeof window !== "undefined" && window.location.port === "5174" ? "http://127.0.0.1:4000" : "";
+        fetch(`${API_BASE}/api/recipes/preview?limit=6`)
             .then((r) => r.json())
             .then((arr) => (Array.isArray(arr) ? setPreviews(arr) : setPreviews([])))
             .catch(() => setPreviews([]));
     }, []);
+    // 추천 레시피는 모달로만 표시: 데이터가 오면 자동 오픈(한 번만)
+    useEffect(() => {
+        if (previews.length > 0 && !isPreviewOpen) {
+            setIsPreviewOpen(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [previews.length]);
 
     const today: DayMeals | null = useMemo(() => getTodayMeals(week), [week]);
 
@@ -56,6 +68,7 @@ export function HomePage() {
     // 레시피 모달 상태
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalRecipe, setModalRecipe] = useState<{ title: string; imageUrl: string; steps: string[] } | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const getRecipeInfo = (name: string, label: string): { title: string; imageUrl: string; steps: string[] } => {
         // 간단 매핑 + 폴백 이미지/스텝
@@ -85,36 +98,7 @@ export function HomePage() {
     return (
         <div className="home-screen">
             <div className="home-container">
-                {previews.length > 0 && (
-                    <section className="recipe-preview-section">
-                        <h2 className="section-title" style={{ color: "#111827" }}>추천 레시피</h2>
-                        <div className="recipe-preview-grid">
-                            {previews.map((r) => (
-                                <div
-                                    key={r.id}
-                                    className="recipe-card"
-                                    onClick={() => {
-                                        setModalRecipe({
-                                            title: r.name,
-                                            imageUrl: (r.image_url as string) || `https://source.unsplash.com/800x600/?${encodeURIComponent(r.name)}`,
-                                            steps: [],
-                                        });
-                                        setIsModalOpen(true);
-                                    }}
-                                    role="button"
-                                >
-                                    <div className="recipe-thumb" style={{ backgroundImage: r.image_url ? `url(${r.image_url})` : undefined }} />
-                                    <div className="recipe-meta">
-                                        <div className="recipe-title">{r.name}</div>
-                                        {typeof r.kcal === "number" && r.kcal > 0 && (
-                                            <div className="recipe-kcal">{r.kcal} kcal</div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
+                {/* 인라인 프리뷰는 제거하고 모달로만 노출 */}
                 <div className="home-header">
                     <div className="header-content">
                         <div className="logo-wrapper">
@@ -248,6 +232,56 @@ export function HomePage() {
                                         <li key={idx}>{s}</li>
                                     ))}
                                 </ol>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 추천 레시피 모달 (3개, 가로 스크롤) */}
+                {isPreviewOpen && (
+                    <div className="modal-overlay" onClick={() => setIsPreviewOpen(false)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <div className="modal-title">추천 레시피</div>
+                                <button
+                                    className="modal-close"
+                                    aria-label="닫기"
+                                    onClick={() => setIsPreviewOpen(false)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="carousel">
+                                    {previews.slice(0, 3).map((r) => (
+                                        <div
+                                            key={r.id}
+                                            className="carousel-item"
+                                            role="button"
+                                            onClick={() => {
+                                                setIsPreviewOpen(false);
+                                                setModalRecipe({
+                                                    title: r.name,
+                                                    imageUrl:
+                                                        (r.image_url as string) ||
+                                                        `https://source.unsplash.com/800x600/?${encodeURIComponent(
+                                                            r.name
+                                                        )}`,
+                                                    steps: [],
+                                                });
+                                                setIsModalOpen(true);
+                                            }}
+                                        >
+                                            <div
+                                                className="carousel-thumb"
+                                                style={{
+                                                    backgroundImage: r.image_url ? `url(${r.image_url})` : undefined,
+                                                }}
+                                            />
+                                            <div className="carousel-title">{r.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
