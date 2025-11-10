@@ -13,10 +13,12 @@ export default function LoginPage() {
         setError(null);
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/login", {
+            const API_BASE =
+                typeof window !== "undefined" && window.location.port === "5174" ? "http://127.0.0.1:4000" : "";
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email: email.trim(), password }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || "로그인 실패");

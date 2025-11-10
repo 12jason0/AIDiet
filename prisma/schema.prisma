@@ -34,6 +34,7 @@ model goal {
   name        String
   description String?  @db.Text
   recipe      recipe[]
+  recipetogoal recipetogoal[]
 }
 
 model ingredient {
@@ -65,6 +66,14 @@ model mealplanrecipe {
   mealplan    mealplan @relation(fields: [mealplan_id], references: [id], onDelete: Cascade, map: "MealPlanRecipe_mealplan_id_fkey")
   recipe      recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade, map: "MealPlanRecipe_recipe_id_fkey")
 
+  // personalization snapshot (optional)
+  portion_multiplier Float?
+  assigned_kcal      Float?
+  assigned_protein   Float?
+  assigned_carbs     Float?
+  assigned_fat       Float?
+  goal_at_generation String?
+
   @@index([mealplan_id], map: "MealPlanRecipe_mealplan_id_idx")
   @@index([recipe_id], map: "MealPlanRecipe_recipe_id_idx")
 }
@@ -93,6 +102,7 @@ model recipe {
   goal              goal?               @relation(fields: [goal_id], references: [id], onUpdate: NoAction, map: "fk_recipe_goal")
   recipeingredient  recipeingredient[]
   recommendationlog recommendationlog[]
+  recipetogoal      recipetogoal[]
 
   @@index([goal_id], map: "fk_recipe_goal")
 }
@@ -123,6 +133,18 @@ model recommendationlog {
   @@index([user_id], map: "RecommendationLog_user_id_idx")
 }
 
+// Many-to-many between recipe and goal
+model recipetogoal {
+  id        Int    @id @default(autoincrement())
+  recipe_id Int
+  goal_id   Int
+  recipe    recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  goal      goal   @relation(fields: [goal_id], references: [id], onDelete: Cascade)
+
+  @@index([recipe_id])
+  @@index([goal_id])
+}
+
 model user {
   id                  Int                 @id @default(autoincrement())
   name                String
@@ -132,6 +154,11 @@ model user {
   age                 Int?
   goal                String?
   calorie_target      Float?
+  // 추가된 프로필 필드
+  height_cm           Float?
+  weight_kg           Float?
+  bmi                 Float?
+  disease             String?
   allergies           Json?
   dislike_ingredients Json?
   createdAt           DateTime            @default(now())

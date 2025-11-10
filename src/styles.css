@@ -711,6 +711,8 @@ textarea.input::placeholder {
     }
 }
 
+/* 모바일에서도 상단 헤더 표시 (이전 숨김 규칙 제거) */
+
 /* Compact layout for short-height screens to fit both sections */
 @media (max-height: 740px) {
     .home-header {
@@ -838,7 +840,9 @@ textarea.input::placeholder {
 }
 .recipe-thumb {
     width: 100%;
-    height: 110px;
+    /* 정사각형 썸네일 */
+    aspect-ratio: 1 / 1;
+    height: auto;
     background: #f3f4f6;
     background-position: center;
     background-size: cover;
@@ -885,7 +889,9 @@ textarea.input::placeholder {
 }
 .carousel-thumb {
     width: 100%;
-    height: 180px;
+    /* 정사각형 썸네일 */
+    aspect-ratio: 1 / 1;
+    height: auto;
     background: #f3f4f6;
     background-size: cover;
     background-position: center;

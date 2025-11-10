@@ -17,9 +17,10 @@ export function HomePage() {
         const id = idParam ? Number(idParam) : null;
         setUserId(id);
         if (!id) return;
-        // 프로필
-        fetch(`/api/user/${id}`)
-            .then((r) => r.json())
+        // 프로필 (JWT 포함)
+        const token = localStorage.getItem("aidiet.token") || "";
+        fetch(`/api/user/${id}`, { headers: { Authorization: token ? `Bearer ${token}` : "" } })
+            .then((r) => (r.ok ? r.json() : null))
             .then(setUser)
             .catch(() => setUser(null));
         // 주간 식단
@@ -33,7 +34,10 @@ export function HomePage() {
         // 프록시 문제 시를 대비해 개발 포트(5174)에서는 API 서버 절대 경로를 사용
         const API_BASE =
             typeof window !== "undefined" && window.location.port === "5174" ? "http://127.0.0.1:4000" : "";
-        fetch(`${API_BASE}/api/recipes/preview?limit=6`)
+        const token = localStorage.getItem("aidiet.token") || "";
+        fetch(`${API_BASE}/api/recipes/preview?limit=6`, {
+            headers: { Authorization: token ? `Bearer ${token}` : "" },
+        })
             .then((r) => r.json())
             .then((arr) => (Array.isArray(arr) ? setPreviews(arr) : setPreviews([])))
             .catch(() => setPreviews([]));

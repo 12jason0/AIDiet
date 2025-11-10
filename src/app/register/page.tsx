@@ -14,10 +14,12 @@ export default function RegisterPage() {
         setError(null);
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/register", {
+            const API_BASE =
+                typeof window !== "undefined" && window.location.port === "5174" ? "http://127.0.0.1:4000" : "";
+            const res = await fetch(`${API_BASE}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || "회원가입 실패");

@@ -40,11 +40,11 @@ export function Footer() {
                     </span>
                     &nbsp;{myLabel}
                 </NavLink>
-                <NavLink to="/board">
-                    <span role="img" aria-label="board">
-                        🗂️
+                <NavLink to="/cart">
+                    <span role="img" aria-label="cart">
+                        🛒
                     </span>
-                    &nbsp;게시판
+                    &nbsp;장바구니
                 </NavLink>
             </nav>
         </footer>
